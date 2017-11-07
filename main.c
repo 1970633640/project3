@@ -15,16 +15,20 @@ typedef struct block
 void * head;
 int region;
 
-void mem_dump() {
-	void *temp = head;
-    printf("head=%lld region=%lld\n",head,region);
-    while (temp < head+region) {
-		if (((block*)temp)->blank==1) {
-			printf("free: %lld ~ %lld (%lld)\n", temp, temp + ((block*)temp)->size,((block*)temp)->size);
+void mem_dump(){
+	void *current=head;
+	block *current_piece;
+	current_piece=(block *)current;
+	while(current!=(head+region)){
+		current_piece=(block *)current;
+		int shift=current_piece->size;
+		if(current_piece->blank){
+			printf("a free piece begins at %p and ends at %p\n",current,current+shift);
 		}
-		temp += ((block*)temp)->size;
+		current+=shift;
 	}
 }
+
 
 int mem_init(int size_of_region)
 {
