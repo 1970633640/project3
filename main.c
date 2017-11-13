@@ -15,18 +15,26 @@ typedef struct block
 void * head;
 int region;
 
-void mem_dump(){
-	void *current=head;
-	block *current_piece;
-	current_piece=(block *)current;
-	while(current!=(head+region)){
-		current_piece=(block *)current;
-		int shift=current_piece->size;
-		if(current_piece->blank){
-			printf("a free piece begins at %p and ends at %p\n",current,current+shift);
-		}
-		current+=shift;
-	}
+void mem_dump()
+{
+    void *current=head;
+    block *current_piece;
+    current_piece=(block *)current;
+    while(current!=(head+region))
+    {
+        current_piece=(block *)current;
+        int shift=current_piece->size;
+        if(current_piece->blank)
+        {
+            printf("□ %d   Bytes a free piece begins at %p and ends at %p\n",shift,current,current+shift);
+        }
+        else
+        {
+            printf("■ %d   Bytes a non-free piece begins at %p and ends at %p\n",shift,current,current+shift);
+        }
+        current+=shift;
+    }
+    printf("-------------------------------------\n");
 }
 
 
@@ -61,46 +69,46 @@ int mem_init(int size_of_region)
 }
 void *mem_alloc(int size, int style)
 {
-    void * temp;
+    void * next;
     void * ans;
-    temp=head;
+    next=head;
     ans=NULL;
     if(size%8!=0)size=(1+size/8)*8;
     size+=sizeof(block);
     if(style==M_BESTFIT)
     {
-        while(temp<=head+region)
+        while(next<=head+region)
         {
-            if(((block*)temp)->blank==1 &&((block*)temp)->size>=size)
+            if(((block*)next)->blank==1 &&((block*)next)->size>=size)
             {
-                if(ans==NULL || ((block*)temp)->size>((block*)ans)->size)
-                    ans=temp;
+                if(ans==NULL || ((block*)next)->size>((block*)ans)->size)
+                    ans=next;
             }
-            temp+=((block*)temp)->size;
+            next+=((block*)next)->size;
         }
     }
     else if(style==M_WORSTFIT)
     {
-        while(temp<=head+region)
+        while(next<=head+region)
         {
-            if(((block*)temp)->blank==1 &&((block*)temp)->size>=size)
+            if(((block*)next)->blank==1 &&((block*)next)->size>=size)
             {
-                if(ans==NULL || ((block*)temp)->size>((block*)ans)->size)
-                    ans=temp;
+                if(ans==NULL || ((block*)next)->size>((block*)ans)->size)
+                    ans=next;
             }
-            temp+=((block*)temp)->size;
+            next+=((block*)next)->size;
         }
     }
     else if(style==M_FIRSTFIT)
     {
-        while(temp<=head+region)
+        while(next<=head+region)
         {
-            if(((block*)temp)->blank==1 &&((block*)temp)->size>=size)
+            if(((block*)next)->blank==1 &&((block*)next)->size>=size)
             {
-                ans=temp;
+                ans=next;
                 break;
             }
-            temp+=((block*)temp)->size;
+            next+=((block*)next)->size;
         }
     }
     if (ans == NULL)
@@ -118,9 +126,45 @@ void *mem_alloc(int size, int style)
     ans+=sizeof(block);
     return ans;
 }
+int mem_free(void* ptr)
+{
+    if (ptr == NULL)
+    {
+        return -1;
+    }
+    ptr-=sizeof(block);
+    ((block*)ptr)->blank=1;
+    void * current=head;
+    while(current<head+region && current+((block*)current)->size<head+region)
+    {
+        void * next=current+((block*)current)->size;
+        while(((block*)current)->blank==1 && ((block*)next)->blank==1 ) //if current.blank==1 AND next.blank==true
+        {
+            ((block*)current)->size+=((block*)next)->size; //current.size+=next.size
+             next=current+((block*)current)->size;
+        }
+        current+=((block*)current)->size;
+    }
+}
 int main()
 {
     mem_init(1000);
+    void* a=mem_alloc(20,M_FIRSTFIT);
+    void* b=mem_alloc(20,M_FIRSTFIT);
+    void* c=mem_alloc(20,M_FIRSTFIT);
+    void* d=mem_alloc(20,M_FIRSTFIT);
+    void* e=mem_alloc(20,M_FIRSTFIT);
+    void* f=mem_alloc(20,M_FIRSTFIT);
+    mem_dump();
+    mem_free(c);
+    mem_free(e);
+    mem_dump();
+    mem_free(d);
+    mem_dump();
+    mem_free(a);
+    mem_free(b);
+    mem_free(c);
+    mem_free(f);
     mem_dump();
     return 0;
 }
