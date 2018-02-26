@@ -145,6 +145,7 @@ int mem_free(void* ptr)
         }
         current+=((block*)current)->size;
     }
+	return 0;
 }
 int main()
 {
